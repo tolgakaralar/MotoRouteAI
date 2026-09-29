@@ -1,0 +1,61 @@
+app:
+    envs:
+        - BITRISE_PROJECT_PATH: MotoRouteAI.xcodeproj
+        - BITRISE_SCHEME: MotoRouteAI
+        - opts:
+            is_expand: false
+          temp_id_0: ""
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+format_version: "25"
+meta:
+    bitrise.io:
+        machine_type: g2-m1
+        machine_type_id: g2.mac.large
+        stack: osx-xcode-27.0.x
+pipelines:
+    pr:
+        workflows:
+            build:
+                depends_on: []
+    push:
+        workflows:
+            build:
+                depends_on: []
+project_type: ios
+workflows:
+    build:
+        steps:
+            - git-clone@8: {}
+            - activate-build-cache-for-xcode@1: {}
+            - script@1:
+                inputs:
+                    - content: |-
+                        #!/bin/bash
+                        set -ex
+                        if which swiftlint >/dev/null; then
+                          swiftlint
+                        else
+                          echo "SwiftLint not installed, skipping linting"
+                        fi
+                title: SwiftLint
+            - xcode-test@6:
+                is_skippable: true
+            - xcode-build-for-simulator@3:
+                inputs:
+                    - project_path: $BITRISE_PROJECT_PATH
+                    - scheme: $BITRISE_SCHEME
+            - deploy-to-bitrise-io@2: {}
+        triggers:
+            pull_request:
+                - source_branch: '*'
+            push:
+                - branch: main
+    deploy:
+        steps:
+            - git-clone@8: {}
+            - xcode-archive@6:
+                inputs:
+                    - project_path: $BITRISE_PROJECT_PATH
+                    - scheme: $BITRISE_SCHEME
+                    - automatic_code_signing: api-key
+            - deploy-to-bitrise-io@2: {}

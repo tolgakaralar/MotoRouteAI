@@ -10,7 +10,7 @@ enum TripType: String, CaseIterable, Identifiable, Hashable {
 }
 
 enum RidingStyle: String, CaseIterable, Identifiable, Hashable {
-    case relaxed = "Relaxed"
+    case relaxed = "Relaxeddd"
     case balanced = "Balanced"
     case spirited = "Spirited"
 

@@ -28,6 +28,6 @@ MotoRouteAI/
 
 ## Gereksinimler
 
-- Xcode 26+
+- Xcode 26.5+ (iOS 26.5 SDK)
 - iOS 26.5+
 - Swift 5.0

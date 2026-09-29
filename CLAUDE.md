@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MotoRouteAI is a SwiftUI iOS app for planning motorcycle trips. The user fills in a trip request,
 an "agent" generates a multi-day `RoutePlan`, and the app shows it in a detail screen. The planning
-backend is currently a mock (`MockTripPlanningService`) — there is no real AI/network integration yet.
+backend is currently a mock (`MockTripPlanningService`) — there is no real AI/network integration
+yet.
 
 Requirements: Xcode 26+ (project created with 26.6), iOS deployment target 26.5, Swift 5 language
 mode. No third-party

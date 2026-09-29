@@ -8,7 +8,8 @@ MotoRouteAI is a SwiftUI iOS app for planning motorcycle trips. The user fills i
 an "agent" generates a multi-day `RoutePlan`, and the app shows it in a detail screen. The planning
 backend is currently a mock (`MockTripPlanningService`) — there is no real AI/network integration yet.
 
-Requirements: Xcode 16+, iOS deployment target 26.5, Swift 5 language mode. No third-party
+Requirements: Xcode 26+ (project created with 26.6), iOS deployment target 26.5, Swift 5 language
+mode. No third-party
 dependencies (no SPM packages, no CocoaPods).
 
 ## Workflow rules
@@ -28,7 +29,10 @@ routine work. Single Xcode project, single target/scheme `MotoRouteAI`; there is
 
 - **Default actor isolation is `MainActor`** (`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`) and
   **Approachable Concurrency** is on. Every type is implicitly `@MainActor` unless marked
-  `nonisolated`; keep this in mind when adding background work or services.
+  `nonisolated`. This includes `TripPlanningService` and `MockTripPlanningService` — a real
+  network/LLM service will need `nonisolated` or `@concurrent` work to stay off the main actor.
+- **`MemberImportVisibility`** upcoming feature is on: each file must itself `import` the module
+  whose members it uses (transitive imports from other files don't count).
 - The project uses **file-system synchronized groups** (`PBXFileSystemSynchronizedRootGroup`):
   new `.swift` files placed under `MotoRouteAI/` are picked up automatically — do not edit
   `project.pbxproj` to register files.
@@ -37,20 +41,26 @@ routine work. Single Xcode project, single target/scheme `MotoRouteAI`; there is
 
 Feature-based MVVM with the Observation framework:
 
+- Entry point is `MotoRouteAIApp.swift` (at the target root, not in `App/`), which shows
+  `AppRootView`. `ContentView.swift` is a leftover wrapper that nothing uses — don't build on it.
 - `App/AppRootView.swift` — `TabView` with three tabs (Plan, Saved, Settings), each in its own
   `NavigationStack`. The Plan tab owns a `[RoutePlan]` navigation path; `TripPlanningView` reports a
   generated plan through its `onGeneratedRoute` closure and the root pushes `RouteDetailView` via
   `.navigationDestination(for: RoutePlan.self)`. Views do not navigate themselves.
 - `Features/<Feature>/{Views,ViewModels}` — ViewModels are `@Observable final class`es held by
-  their view in `@State` (initialized via `_viewModel = State(initialValue:)`), bound with
-  `@Bindable` inside `body`. Views expose a second `init(viewModel:...)` for injection/previews.
+  their view in `@State` (initialized via `_viewModel = State(initialValue:)`); a view that binds
+  to VM properties declares `@Bindable var viewModel = viewModel` inside `body`. Views that need
+  injection expose a second `init(viewModel:...)` (currently only `TripPlanningView`).
 - `Core/Models/TripModels.swift` — all domain value types (`TripRequest`, `RoutePlan`,
   `RouteDayPlan`, `TripStop`, `SafetyInsight`, `RiderProfile`) and their enums. Models are
   `Hashable` structs (required for `NavigationStack` value-based navigation); enums use
   user-facing `String` raw values that the UI displays directly.
-- Planning pipeline: `TripPlanningViewModel` → `TripPlannerAgent` → `TripPlanningService`
-  protocol (`Core/Services/MockTripPlanningService.swift`). `TripPlannerAgent` takes the service
-  via init with the mock as default — a real LLM/routing backend should be added as a new
-  `TripPlanningService` conformance and injected here, not by changing the views.
+- Planning pipeline: `TripPlanningViewModel` → `TripPlannerAgent` (`Core/Agents/`) →
+  `TripPlanningService` protocol (defined in `Core/Services/MockTripPlanningService.swift`). A real
+  LLM/routing backend should be a new `TripPlanningService` conformance. There is no DI container
+  or composition root: `TripPlanningViewModel.init()` builds `TripPlannerAgent()`, whose default
+  service is the mock. Swap it by changing that default in `TripPlannerAgent.init`, or inject via
+  `TripPlanningViewModel(agent:)` → `TripPlanningView(viewModel:onGeneratedRoute:)` from
+  `AppRootView`.
 - `SavedTripsView` and `SettingsView` are static placeholders (no persistence, no settings state).
   `RiderProfile` exists in the models but is not wired into the UI yet.

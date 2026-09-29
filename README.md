@@ -13,7 +13,8 @@ SwiftUI tabanlı, motosiklet rota planlama uygulaması.
 
 ```
 MotoRouteAI/
-├── App/                 # Uygulama giriş noktası ve root view
+├── MotoRouteAIApp.swift # Uygulama giriş noktası (@main)
+├── App/                 # Root view (TabView + navigation)
 ├── Core/
 │   ├── Agents/          # Trip planning agent
 │   ├── Models/          # Paylaşılan veri modelleri
@@ -27,6 +28,6 @@ MotoRouteAI/
 
 ## Gereksinimler
 
-- Xcode 16+
+- Xcode 26+
 - iOS 26.5+
 - Swift 5.0
